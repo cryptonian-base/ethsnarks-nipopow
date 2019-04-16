@@ -83,11 +83,11 @@ class Miximus(object):
 
     # def prove(self, root, spend_preimage, exthash, address_bits, path, pk_file=None):
     def prove(self, root, spend_preimage, address_bits, path, pk_file=None):
-        logging.debug(root)
-        logging.debug(spend_preimage);
-        logging.debug(address_bits)
-        logging.debug(path)
-        
+        logging.info(root)
+        logging.info(spend_preimage);
+        logging.info(address_bits)
+        logging.info(path)
+
         assert isinstance(path, (list, tuple))
         assert len(path) == self.tree_depth
         if isinstance(address_bits, (tuple, list)):
