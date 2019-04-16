@@ -158,12 +158,15 @@ public:
         // pub_hash = H(root, nullifier, external_hash)
         // pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")), // Cryptonian.base Out!
 
-        // Cryptonian.base
+        //===== Cryptonian.base ======//
         sha_left(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:left")),
         sha_right(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:right")),
         sha_full_input(in_pb, sha_left, sha_right, FMT(annotation_prefix,"sha:full_input")),
         sha_full_output(in_pb, SHA256_digest_size, FMT(annotation_prefix,"sha:full_output")),
-        m_auth_sha(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:authentication")),
+        leaf_sha_hash(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:leaf_hash")),
+        //m_auth_sha(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:authentication")),
+            // m_auth_sha 초기화는 m_authenticator 참조!!!!
+        //===========================//
 
         // leaf_hash = H(secret)
         leaf_hash(in_pb, zero, {secret_var}, FMT(annotation_prefix, ".leaf_hash")),
@@ -246,7 +249,7 @@ public:
         //===== Cryptonian.base to set "SHA256" =====//
         uint8_t input_buffer[SHA256_block_size_bytes];
         uint8_t output_digest[SHA256_digest_size_bytes];
-
+        // "input_buffer" should be passed via a parameter.
         const libff::bit_vector left_bv = bytes_to_bv(input_buffer, SHA256_digest_size_bytes);
         const libff::bit_vector right_bv = bytes_to_bv(&input_buffer[SHA256_digest_size_bytes], SHA256_digest_size_bytes);
 
