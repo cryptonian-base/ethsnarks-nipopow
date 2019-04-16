@@ -27,6 +27,9 @@ along with Miximus.  If not, see <https://www.gnu.org/licenses/>.
 #include "gadgets/merkle_tree.cpp"
 
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
+// Cryptonian.base
+#include "gadgets/sha256_full.hpp"
+#include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>   //digest_variable
 
 
 using libsnark::dual_variable_gadget;
@@ -116,9 +119,13 @@ public:
     HashT leaf_hash;
     merkle_path_authenticator<HashT> m_authenticator;
 
+    // Cryptonian.base to set SHA256
     SHAHashT leaf_sha_hash;
     merkle_path_authenticator<SHAHashT> m_auth_sha;
-
+    digest_variable<FieldT> sha_left;
+    digest_variable<FieldT> sha_right;
+    block_variable<FieldT>  sha_full_input;
+    digest_variable<FieldT> sha_full_output;
 
     mod_miximus(
         ProtoboardT &in_pb,
@@ -151,9 +158,15 @@ public:
         // pub_hash = H(root, nullifier, external_hash)
         // pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")), // Cryptonian.base Out!
 
+        // Cryptonian.base
+        sha_left(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:left")),
+        sha_right(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:right")),
+        sha_full_input(in_pb, sha_left, sha_right, FMT(annotation_prefix,"sha:full_input")),
+        sha_full_output(in_pb, SHA256_digest_size, FMT(annotation_prefix,"sha:full_output")),
+        m_auth_sha(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:authentication")),
+
         // leaf_hash = H(secret)
         leaf_hash(in_pb, zero, {secret_var}, FMT(annotation_prefix, ".leaf_hash")),
-
         // assert merkle_path_authenticate(leaf_hash, path, root)
         m_authenticator(in_pb, tree_depth, address_bits.bits, m_IVs, leaf_hash.result(), root_var, path_var, FMT(annotation_prefix, ".authenticator"))
     {
@@ -165,16 +178,10 @@ public:
         // - root_var (provided by user, authenticated by contract, merkle root of the tree)
         // - nullifier_var (provided by user, this is the unique tag, used to prevent double spends)
         // - external_hash_var  (provided by contract)
-        
-        // Cryptonian.base
-        digest_variable<FieldT> left(pb, SHA256_digest_size, "left");
-        digest_variable<FieldT> right(pb, SHA256_digest_size, "right");
-    
-
-        uint8_t input_buffer[SHA256_block_size_bytes];
-
-        const libff::bit_vector left_bv = bytes_to_bv(input_buffer, SHA256_digest_size_bytes);
-        const libff::bit_vector right_bv = bytes_to_bv(&input_buffer[SHA256_digest_size_bytes], SHA256_digest_size_bytes);
+     
+        // Cryptonian.base .. to set 'SHA256' .. ==> moved above
+        //digest_variable<FieldT> left(pb, SHA256_digest_size, "left");
+        //digest_variable<FieldT> right(pb, SHA256_digest_size, "right");
 
 
     }
@@ -199,6 +206,9 @@ public:
 
         leaf_hash.generate_r1cs_constraints();
         m_authenticator.generate_r1cs_constraints();
+
+        // Cryptonian.base
+        m_auth_sha.generate_r1cs_constraints();
     }
 
     void generate_r1cs_witness(
@@ -232,6 +242,22 @@ public:
 
         leaf_hash.generate_r1cs_witness();
         m_authenticator.generate_r1cs_witness();
+
+        //===== Cryptonian.base to set "SHA256" =====//
+        uint8_t input_buffer[SHA256_block_size_bytes];
+        uint8_t output_digest[SHA256_digest_size_bytes];
+
+        const libff::bit_vector left_bv = bytes_to_bv(input_buffer, SHA256_digest_size_bytes);
+        const libff::bit_vector right_bv = bytes_to_bv(&input_buffer[SHA256_digest_size_bytes], SHA256_digest_size_bytes);
+
+        sha_left.generate_r1cs_witness(left_bv);
+        sha_right.generate_r1cs_witness(right_bv);
+
+        m_auth_sha.generate_r1cs_witness();
+
+        auto output_digest_bits = bytes_to_bv(output_digest, SHA256_digest_size_bytes);
+        sha_full_output.generate_r1cs_witness(output_digest_bits);
+        //==========================================//
     }
 };
 
