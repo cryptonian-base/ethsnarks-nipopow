@@ -25,6 +25,8 @@ import ctypes
 
 from ethsnarks.verifier import Proof, VerifyingKey
 
+# Cryptonian.base
+import logging
 
 class Miximus(object):
     def __init__(self, native_library_path, vk, pk_file=None):
@@ -81,11 +83,16 @@ class Miximus(object):
 
     # def prove(self, root, spend_preimage, exthash, address_bits, path, pk_file=None):
     def prove(self, root, spend_preimage, address_bits, path, pk_file=None):
+        logging.debug(root)
+        logging.debug(spend_preimage);
+        logging.debug(address_bits)
+        logging.debug(path)
+        
         assert isinstance(path, (list, tuple))
         assert len(path) == self.tree_depth
         if isinstance(address_bits, (tuple, list)):
             address_bits = ''.join([str(_) for _ in address_bits])
-        # assert re.match(r'^[01]+$', address_bits)
+        assert re.match(r'^[01]+$', address_bits)
         assert len(address_bits) == self.tree_depth
         assert isinstance(root, int)
         assert isinstance(spend_preimage, int)
