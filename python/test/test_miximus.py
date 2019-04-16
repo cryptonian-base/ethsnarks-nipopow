@@ -35,9 +35,9 @@ class TestMiximus(unittest.TestCase):
 		snark_proof = wrapper.prove(
 			tree.root,
 			secret,
-			# exthash,	# Cryptonian.base Out!!
 			leaf_proof.address,
 			leaf_proof.path)
+			# exthash,	# Cryptonian.base Out!!
 
 		self.assertTrue(wrapper.verify(snark_proof))
 
