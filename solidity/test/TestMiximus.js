@@ -40,12 +40,14 @@ var libmiximus = ffi.Library("../.build/libmiximus", {
     ],
 
     // Create nullifier
+    /*  // Cryptonian.base
     "miximus_nullifier": [
         "string", [
             "string",   // secret (base 10 number)
             "string",   // leaf_index (base 10 number)
         ]
     ]
+    */
 });
 
 

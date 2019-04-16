@@ -41,7 +41,8 @@ int miximus_genkeys( const char *pk_file, const char *vk_file );
 
 bool miximus_verify( const char *vk_json, const char *proof_json );
 
-char* miximus_nullifier( const char *in_secret, const char *in_leaf_index );
+// Cryptonian.base OuT!!
+// char* miximus_nullifier( const char *in_secret, const char *in_leaf_index );
 
 size_t miximus_tree_depth( void );
 
