@@ -84,7 +84,7 @@ class Miximus(object):
     # def prove(self, root, spend_preimage, exthash, address_bits, path, pk_file=None):
     def prove(self, root, spend_preimage, address_bits, path, pk_file=None):
         logging.info(root)
-        logging.info(spend_preimage);
+        logging.info(spend_preimage)
         logging.info(address_bits)
         logging.info(path)
 

@@ -6,6 +6,7 @@ from ethsnarks.utils import native_lib_path
 from ethsnarks.merkletree import MerkleTree
 from miximus import Miximus
 
+import logging
 
 NATIVE_LIB_PATH = native_lib_path('../.build/libmiximus')
 VK_PATH = '../.keys/miximus.vk.json'
@@ -31,6 +32,12 @@ class TestMiximus(unittest.TestCase):
 
 		# Generate proof		
 		wrapper = Miximus(NATIVE_LIB_PATH, VK_PATH, PK_PATH)
+		logging.info(tree.root)
+		logging.info(secret)
+		logging.info(leaf_proof.address)
+		logging.info(leaf_proof.path)
+
+
 		tree_depth = wrapper.tree_depth
 		snark_proof = wrapper.prove(
 			tree.root,
