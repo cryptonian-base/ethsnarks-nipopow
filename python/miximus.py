@@ -53,7 +53,8 @@ class Miximus(object):
         assert self.tree_depth <= 32
 
         lib_prove = lib.miximus_prove   # Cryptonian.base 5 -> 4
-        # lib_prove.argtypes = ([ctypes.c_char_p] * 4) + [(ctypes.c_char_p * self.tree_depth)]
+        # lib_prove.argtypes = ([ctypes.c_char_p] * 5) + [(ctypes.c_char_p * self.tree_depth)]
+        lib_prove.argtypes = ([ctypes.c_char_p] * 4) + [(ctypes.c_char_p * self.tree_depth)]
         lib_prove.restype = ctypes.c_char_p
         self._prove = lib_prove
 
