@@ -98,7 +98,7 @@ class Miximus(object):
 
         # Public parameters
         root = ctypes.c_char_p(str(root).encode('ascii'))
-        exthash = ctypes.c_char_p(str(exthash).encode('ascii'))
+        # exthash = ctypes.c_char_p(str(exthash).encode('ascii')) # Cryptonian.base Out!!
     
         # Private parameters
         spend_preimage = ctypes.c_char_p(str(spend_preimage).encode('ascii'))
