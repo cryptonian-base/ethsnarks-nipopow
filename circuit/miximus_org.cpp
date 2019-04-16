@@ -87,11 +87,11 @@ public:
     const size_t tree_depth = MIXIMUS_TREE_DEPTH;
 
     // public inputs
-    // const VariableT pub_hash_var;    // Cryptonian.base Out!
+    const VariableT pub_hash_var;
 
     // hashed public inputs
     const VariableT root_var;
-    //const VariableT external_hash_var;  // Cryptonain.base Out!
+    const VariableT external_hash_var;
 
     // public constants
     const VariableArrayT m_IVs;
@@ -105,8 +105,8 @@ public:
     const VariableArrayT path_var;
 
     // logic gadgets
-    // HashT nullifier_hash;              // Cryptonian.base Out! 
-    //HashT pub_hash;                     // Cryptonian.base Out!
+    HashT nullifier_hash;
+    HashT pub_hash;
     HashT leaf_hash;
     merkle_path_authenticator<HashT> m_authenticator;
 
@@ -117,11 +117,11 @@ public:
         GadgetT(in_pb, annotation_prefix),
 
         // public inputs
-        // pub_hash_var(make_variable(in_pb, FMT(annotation_prefix, ".pub_hash_var"))), // Cryptonian.base Out!
+        pub_hash_var(make_variable(in_pb, FMT(annotation_prefix, ".pub_hash_var"))),
 
         // hashed public inputs
         root_var(make_variable(in_pb, FMT(annotation_prefix, ".root_var"))),
-        // external_hash_var(make_variable(in_pb, FMT(annotation_prefix, ".external_hash_var"))), // Cryptonian.base Out!
+        external_hash_var(make_variable(in_pb, FMT(annotation_prefix, ".external_hash_var"))),
 
         // Initialisation vector for merkle tree hard-coded constants
         // Means that H('a', 'b') on level1 will have a different output than the same values on level2
@@ -136,10 +136,10 @@ public:
         path_var(make_var_array(in_pb, tree_depth, FMT(annotation_prefix, ".path"))),
 
         // nullifier = H(address_bits, secret)
-        // nullifier_hash(in_pb, zero, {address_bits.packed, secret_var}, FMT(annotation_prefix, ".nullifier_hash")), // Cryptonian.base Out!
+        nullifier_hash(in_pb, zero, {address_bits.packed, secret_var}, FMT(annotation_prefix, ".nullifier_hash")),
 
         // pub_hash = H(root, nullifier, external_hash)
-        // pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")), // Cryptonian.base Out!
+        pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")),
 
         // leaf_hash = H(secret)
         leaf_hash(in_pb, zero, {secret_var}, FMT(annotation_prefix, ".leaf_hash")),
@@ -159,16 +159,14 @@ public:
 
     void generate_r1cs_constraints()
     {
-        // nullifier_hash.generate_r1cs_constraints(); // Cryptonian.base Out!
+        nullifier_hash.generate_r1cs_constraints();
         address_bits.generate_r1cs_constraints(true);
 
         // Ensure privately provided public inputs match the hashed input
-        /* // Cryptonian.base Out!
         pub_hash.generate_r1cs_constraints();
         this->pb.add_r1cs_constraint(
             ConstraintT(pub_hash_var, FieldT::one(), pub_hash.result()),
             ".pub_hash_var == H(root, nullifier, external_hash)");
-        */
 
         // Enforce zero internally
         this->pb.add_r1cs_constraint(
@@ -181,28 +179,26 @@ public:
 
     void generate_r1cs_witness(
         const FieldT in_root,         // merkle tree root
- //       const FieldT in_exthash,      // hash of external parameters  // Cryptonian.base Commented Out
+        const FieldT in_exthash,      // hash of external parameters
         const FieldT in_secret,     // spend secret
         const libff::bit_vector in_address,
         const std::vector<FieldT> &in_path
     ) {
         // hashed public inputs
         this->pb.val(root_var) = in_root;
-        // this->pb.val(external_hash_var) = in_exthash;    // Cryptonian.base Out!!
+        this->pb.val(external_hash_var) = in_exthash;
 
         // private inputs
         this->pb.val(secret_var) = in_secret;
         address_bits.bits.fill_with_bits(this->pb, in_address);
         address_bits.generate_r1cs_witness_from_bits();
 
-        // nullifier_hash.generate_r1cs_witness();  //
+        nullifier_hash.generate_r1cs_witness();
 
         // public hash
-        // this->pb.val(pub_hash_var) = mimc_hash({in_root, this->pb.val(nullifier_hash.result()), in_exthash});
-        /* // Cryptonian.base in_exthash OUT!!
-        this->pb.val(pub_hash_var) = mimc_hash({in_root, this->pb.val(nullifier_hash.result())});   
+        this->pb.val(pub_hash_var) = mimc_hash({in_root, this->pb.val(nullifier_hash.result()), in_exthash});
         pub_hash.generate_r1cs_witness();
-        */
+
         for( size_t i = 0; i < tree_depth; i++ )
         {
             this->pb.val(path_var[i]) = in_path[i];
@@ -221,7 +217,7 @@ size_t miximus_tree_depth( void ) {
     return MIXIMUS_TREE_DEPTH;
 }
 
-/* // Cryptonian.base Out!!
+
 char* miximus_nullifier( const char *in_secret, const char *in_leaf_index )
 {
     ppT::init_public_params();
@@ -243,12 +239,12 @@ char* miximus_nullifier( const char *in_secret, const char *in_leaf_index )
 
     return result_str;
 }
-*/
+
 
 char *miximus_prove(
     const char *pk_file,
     const char *in_root,
-    // const char *in_exthash,  // Cryptonian.base
+    const char *in_exthash,
     const char *in_secret,
     const char *in_address,
     const char **in_path
@@ -256,7 +252,7 @@ char *miximus_prove(
     ppT::init_public_params();
 
     const FieldT arg_root(in_root);
-    // const FieldT arg_exthash(in_exthash); // Cryptonian.base
+    const FieldT arg_exthash(in_exthash);
     const FieldT arg_secret(in_secret);
 
     // Fill address bits with 0s and 1s from str
@@ -291,8 +287,7 @@ char *miximus_prove(
     ProtoboardT pb;
     ethsnarks::mod_miximus mod(pb, "miximus");
     mod.generate_r1cs_constraints();
-    // mod.generate_r1cs_witness(arg_root, arg_exthash, arg_secret, address_bits, arg_path);
-    mod.generate_r1cs_witness(arg_root, arg_secret, address_bits, arg_path);    // Cryptonian.base
+    mod.generate_r1cs_witness(arg_root, arg_exthash, arg_secret, address_bits, arg_path);
 
     if( ! pb.is_satisfied() )
     {

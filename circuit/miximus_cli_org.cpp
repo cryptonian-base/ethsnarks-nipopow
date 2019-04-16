@@ -38,17 +38,14 @@ using ethsnarks::mod_miximus;
 
 static int main_prove( int argc, char **argv )
 {
-    if( argc < (7 + (int)MIXIMUS_TREE_DEPTH) )  // Cryptonian.base 
+    if( argc < (9 + (int)MIXIMUS_TREE_DEPTH) )
     {
-        // nullifier, external hash OUT!! by Cryptonian.base
-        cerr << "Usage: " << argv[0] << " prove <pk.raw> <proof.json> <public:root> <secret:secret> <secret:merkle-address> <secret:merkle-path ...>" << endl;
-        //cerr << "Usage: " << argv[0] << " prove <pk.raw> <proof.json> <public:root> <public:nullifier> <public:exthash> <secret:secret> <secret:merkle-address> <secret:merkle-path ...>" << endl;
-        
+        cerr << "Usage: " << argv[0] << " prove <pk.raw> <proof.json> <public:root> <public:nullifier> <public:exthash> <secret:secret> <secret:merkle-address> <secret:merkle-path ...>" << endl;
         cerr << "Args: " << endl;
         cerr << "\t<pk.raw>         Path to proving key" << endl;
         cerr << "\t<proof.json>     Write proof to this file" << endl;
         cerr << "\t<root>           Merkle tree root" << endl;
-        // cerr << "\t<exthash>        Hash of external variables" << endl; // Cryptonian.base
+        cerr << "\t<exthash>        Hash of external variables" << endl;
         cerr << "\t<secret>         Spend secret" << endl;
         cerr << "\t<merkle-address> 0 and 1 bits for tree path" << endl;
         cerr << "\t<merkle-path...> items for merkle tree path" << endl;
@@ -57,18 +54,17 @@ static int main_prove( int argc, char **argv )
 
     auto pk_filename = argv[2];
     auto proof_filename = argv[3];
-    auto arg_root = argv[4];            // Merkle Root
-    //auto arg_exthash = argv[5];       // External Out!
-    auto arg_secret = argv[5];
-    auto arg_address = argv[6];
+    auto arg_root = argv[4];
+    auto arg_exthash = argv[5];
+    auto arg_secret = argv[6];
+    auto arg_address = argv[7];
     
     const char *arg_path[MIXIMUS_TREE_DEPTH];
     for( size_t i = 0; i < MIXIMUS_TREE_DEPTH; i++ ) {
-        arg_path[i] = argv[7 + i];      // exthash, nullifier 제거.. Cryptonian.base
+        arg_path[i] = argv[9 + i];
     }
 
-    //auto json = miximus_prove(pk_filename, arg_root, arg_exthash, arg_secret, arg_address, arg_path);
-    auto json = miximus_prove(pk_filename, arg_root, arg_secret, arg_address, arg_path);
+    auto json = miximus_prove(pk_filename, arg_root, arg_exthash, arg_secret, arg_address, arg_path);
 
     ofstream fh;
     fh.open(proof_filename, std::ios::binary);

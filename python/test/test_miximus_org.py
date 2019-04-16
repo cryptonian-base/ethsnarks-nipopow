@@ -19,7 +19,7 @@ class TestMiximus(unittest.TestCase):
 		for n in range(0, 2):
 			tree.append(int(FQ.random()))
 
-		# exthash = int(FQ.random())	# Cryptonian.base
+		exthash = int(FQ.random())
 		secret = int(FQ.random())
 		leaf_hash = mimc_hash([secret])
 		leaf_idx = tree.append(leaf_hash)
@@ -35,7 +35,7 @@ class TestMiximus(unittest.TestCase):
 		snark_proof = wrapper.prove(
 			tree.root,
 			secret,
-			# exthash,	# Cryptonian.base Out!!
+			exthash,
 			leaf_proof.address,
 			leaf_proof.path)
 
