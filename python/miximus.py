@@ -69,14 +69,14 @@ class Miximus(object):
         self._nullifier = lib_nullifier
         """
 
-""" // Cryptonian.base Out!!
+    """ // Cryptonian.base Out!!
     def nullifier(self, secret, leaf_index):
         assert isinstance(secret, int)
         assert isinstance(leaf_index, int)
         secret = ctypes.c_char_p(str(secret).encode('ascii'))
         leaf_index = ctypes.c_char_p(str(leaf_index).encode('ascii'))
         return int(self._nullifier(secret, leaf_index))
-"""
+    """
 
     # def prove(self, root, spend_preimage, exthash, address_bits, path, pk_file=None):
     def prove(self, root, spend_preimage, address_bits, path, pk_file=None):
