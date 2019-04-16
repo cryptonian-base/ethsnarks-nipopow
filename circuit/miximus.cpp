@@ -35,6 +35,10 @@ using ethsnarks::ppT;
 using ethsnarks::FieldT;
 using ethsnarks::ProtoboardT;
 
+// Cryptonian.base
+using libsnark::SHA256_digest_size;
+using libsnark::SHA256_block_size;
+
 const size_t MIXIMUS_TREE_DEPTH = 29;
 
 namespace ethsnarks {
@@ -84,6 +88,8 @@ class mod_miximus : public GadgetT
 {
 public:
     typedef MiMC_hash_gadget HashT;
+    typedef sha256_full_gadget_512 SHAHashT;
+
     const size_t tree_depth = MIXIMUS_TREE_DEPTH;
 
     // public inputs
@@ -109,6 +115,10 @@ public:
     //HashT pub_hash;                     // Cryptonian.base Out!
     HashT leaf_hash;
     merkle_path_authenticator<HashT> m_authenticator;
+
+    SHAHashT leaf_sha_hash;
+    merkle_path_authenticator<SHAHashT> m_auth_sha;
+
 
     mod_miximus(
         ProtoboardT &in_pb,
@@ -155,6 +165,18 @@ public:
         // - root_var (provided by user, authenticated by contract, merkle root of the tree)
         // - nullifier_var (provided by user, this is the unique tag, used to prevent double spends)
         // - external_hash_var  (provided by contract)
+        
+        // Cryptonian.base
+        digest_variable<FieldT> left(pb, SHA256_digest_size, "left");
+        digest_variable<FieldT> right(pb, SHA256_digest_size, "right");
+    
+
+        uint8_t input_buffer[SHA256_block_size_bytes];
+
+        const libff::bit_vector left_bv = bytes_to_bv(input_buffer, SHA256_digest_size_bytes);
+        const libff::bit_vector right_bv = bytes_to_bv(&input_buffer[SHA256_digest_size_bytes], SHA256_digest_size_bytes);
+
+
     }
 
     void generate_r1cs_constraints()
