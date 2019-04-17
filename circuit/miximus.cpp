@@ -166,6 +166,21 @@ public:
         leaf_sha_hash(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:leaf_hash")),
         //m_auth_sha(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:authentication")),
             // m_auth_sha 초기화는 m_authenticator 참조!!!!
+            // sha256_full 의 libsnark::digest_variable<FieldT> output; 
+                // 다만  param은 VariableT?! - libsnark::pb_variable<ethsnarks::FieldT> VariableT in_leaf;
+        m_auth_sha(in_pb, tree_depth, address_bits.bits, m_IVs, leaf_sha_hash.output.get_digest(), root_var, path_var, FMT(annotation_prefix,"sha:authenticator")),
+        /*
+        merkle_path_authenticator(
+            ProtoboardT &in_pb,
+            const size_t in_depth,
+            const VariableArrayT in_address_bits,
+            const VariableArrayT in_IVs,
+            const VariableT in_leaf,
+            const VariableT in_expected_root,
+            const VariableArrayT in_path,
+            const std::string &in_annotation_prefix
+        )
+        */
         //===========================//
 
         // leaf_hash = H(secret)
@@ -212,6 +227,19 @@ public:
 
         // Cryptonian.base
         m_auth_sha.generate_r1cs_constraints();
+    }
+
+    //======== Cryptonian.base ============//
+    void generate_r1cs_witness_sha( const uint8_t* in_bytes, const uint32_t length) {
+        uint8_t output_digest[SHA256_digest_size_bytes];
+
+        SHA256_CTX  ctx;
+        SHA256_Init(&ctx);
+        SHA256_Update(&ctx, in_bytes, length);
+        SHA256_Final(output_digest, &ctx);
+        
+        auto output_digest_bits = bytes_to_bv (output_digest, SHA256_digest_size_bytes);
+        sha_full_output.generate_r1cs_witness(output_digest_bits);
     }
 
     void generate_r1cs_witness(
