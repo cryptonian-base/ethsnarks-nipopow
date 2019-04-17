@@ -122,8 +122,10 @@ public:
     // Cryptonian.base to set SHA256
     SHAHashT leaf_sha_hash;
     merkle_path_authenticator<SHAHashT> m_auth_sha;
+    #if 0
     digest_variable<FieldT> sha_left;
     digest_variable<FieldT> sha_right;
+    #endif
     block_variable<FieldT>  sha_full_input;
     digest_variable<FieldT> sha_full_output;
 
@@ -159,16 +161,22 @@ public:
         // pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")), // Cryptonian.base Out!
 
         //===== Cryptonian.base ======//
+        #if 0
         sha_left(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:left")),
         sha_right(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:right")),
         sha_full_input(in_pb, sha_left, sha_right, FMT(annotation_prefix,"sha:full_input")),
+        #endif
+        sha_full_input(in_pb, SHA256_block_size, FMT(annotation_prefix, "sha:full_input")),
         sha_full_output(in_pb, SHA256_digest_size, FMT(annotation_prefix,"sha:full_output")),
         leaf_sha_hash(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:leaf_hash")),
         //m_auth_sha(in_pb, sha_full_input, sha_full_output, FMT(annotation_prefix, "sha:authentication")),
             // m_auth_sha 초기화는 m_authenticator 참조!!!!
             // sha256_full 의 libsnark::digest_variable<FieldT> output; 
                 // 다만  param은 VariableT?! - libsnark::pb_variable<ethsnarks::FieldT> VariableT in_leaf;
-        m_auth_sha(in_pb, tree_depth, address_bits.bits, m_IVs, leaf_sha_hash.output.get_digest(), root_var, path_var, FMT(annotation_prefix,"sha:authenticator")),
+        m_auth_sha(in_pb, tree_depth, address_bits.bits, m_IVs, 
+            //leaf_sha_hash.output.get_digest(), 
+            make_variable(in_pb, convert_bit_vector_to_field_element(leaf_sha_hash.output.get_digest())),
+            root_var, path_var, FMT(annotation_prefix,"sha:authenticator")),
         /*
         merkle_path_authenticator(
             ProtoboardT &in_pb,
@@ -227,6 +235,7 @@ public:
 
         // Cryptonian.base
         m_auth_sha.generate_r1cs_constraints();
+        leaf_sha_hash.generate_r1cs_constraints();
     }
 
     //======== Cryptonian.base ============//
@@ -237,9 +246,13 @@ public:
         SHA256_Init(&ctx);
         SHA256_Update(&ctx, in_bytes, length);
         SHA256_Final(output_digest, &ctx);
-        
+#if 0        
         auto output_digest_bits = bytes_to_bv (output_digest, SHA256_digest_size_bytes);
         sha_full_output.generate_r1cs_witness(output_digest_bits);
+#endif
+        const auto input_bv = bytes_to_bv(in_bytes, length);
+        const auto output_bv = bytes_to_bv(output_digest, SHA256_digest_size_bytes);
+        this->generate_r1cs_witness(input_bv, output_bv);
     }
 
     void generate_r1cs_witness(
@@ -275,6 +288,7 @@ public:
         m_authenticator.generate_r1cs_witness();
 
         //===== Cryptonian.base to set "SHA256" =====//
+        #if 0
         uint8_t input_buffer[SHA256_block_size_bytes];
         uint8_t output_digest[SHA256_digest_size_bytes];
         // "input_buffer" should be passed via a parameter.
@@ -284,11 +298,24 @@ public:
         sha_left.generate_r1cs_witness(left_bv);
         sha_right.generate_r1cs_witness(right_bv);
 
-        m_auth_sha.generate_r1cs_witness();
-
         auto output_digest_bits = bytes_to_bv(output_digest, SHA256_digest_size_bytes);
         sha_full_output.generate_r1cs_witness(output_digest_bits);
+        #endif
         //==========================================//
+    }
+
+    void generate_r1cs_witness_preimage(
+        const bit_vector &in_block,
+        const bit_vector &in_expected_bv
+    ) {
+        assert(in_block.size() == SHA256_block_size);
+        assert(in_expected_bv.size() == SHA256_digest_size);
+
+        sha_full_input.generate_r1cs_witness(in_block);
+        sha_full_output.generate_r1cs_witness(in_expected_bv);
+        
+        leaf_sha_hash.generate_r1cs_witness();
+        m_auth_sha.generate_r1cs_witness();
     }
 };
 
