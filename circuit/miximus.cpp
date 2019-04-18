@@ -32,6 +32,7 @@ along with Miximus.  If not, see <https://www.gnu.org/licenses/>.
 #include "gadgets/sha256_full.hpp"
 #include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>   //digest_variable
 #include <libff/algebra/fields/field_utils.hpp>             // convert_bit_vector_to_field_element
+//#include "gadgets/merkle_tree_sha.cpp"
 
 
 using libsnark::dual_variable_gadget;
