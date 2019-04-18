@@ -37,10 +37,17 @@ using libff::convert_field_element_to_bit_vector;
 using ethsnarks::ppT;
 using ethsnarks::FieldT;
 using ethsnarks::ProtoboardT;
+using libsnark::block_variable;
+using libsnark::digest_variable;
 
 // Cryptonian.base
 using libsnark::SHA256_digest_size;
 using libsnark::SHA256_block_size;
+using libff::bit_vector;
+using libff::convert_bit_vector_to_field_element;
+
+
+
 
 const size_t MIXIMUS_TREE_DEPTH = 29;
 
@@ -252,7 +259,7 @@ public:
 #endif
         const auto input_bv = bytes_to_bv(in_bytes, length);
         const auto output_bv = bytes_to_bv(output_digest, SHA256_digest_size_bytes);
-        this->generate_r1cs_witness(input_bv, output_bv);
+        this->generate_r1cs_witness_preimage(input_bv, output_bv);
     }
 
     void generate_r1cs_witness(
