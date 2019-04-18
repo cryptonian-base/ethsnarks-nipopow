@@ -27,9 +27,11 @@ along with Miximus.  If not, see <https://www.gnu.org/licenses/>.
 #include "gadgets/merkle_tree.cpp"
 
 #include <libsnark/gadgetlib1/gadgets/basic_gadgets.hpp>
+
 // Cryptonian.base
 #include "gadgets/sha256_full.hpp"
 #include <libsnark/gadgetlib1/gadgets/hashes/hash_io.hpp>   //digest_variable
+#include <libff/algebra/fields/field_utils.hpp>             // convert_bit_vector_to_field_element
 
 
 using libsnark::dual_variable_gadget;
@@ -182,10 +184,11 @@ public:
                 // 다만  param은 VariableT?! - libsnark::pb_variable<ethsnarks::FieldT> VariableT in_leaf;
         m_auth_sha(in_pb, tree_depth, address_bits.bits, m_IVs, 
             //leaf_sha_hash.output.get_digest(), 
-            make_variable(in_pb, convert_bit_vector_to_field_element(leaf_sha_hash.output.get_digest())),
+            // make_variable(in_pb, convert_bit_vector_to_field_element(leaf_sha_hash.output.get_digest())),
+            make_variable(in_pb, convert_bit_vector_to_field_element<FieldT>(leaf_sha_hash.output.get_digest()), FMT(annotation_prefix,"sha:leaf_sha_hash.output")),
             root_var, path_var, FMT(annotation_prefix,"sha:authenticator")),
         /*
-        merkle_path_authenticator(
+        merkle_path_authenticator(d
             ProtoboardT &in_pb,
             const size_t in_depth,
             const VariableArrayT in_address_bits,
