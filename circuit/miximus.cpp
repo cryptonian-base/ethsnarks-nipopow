@@ -49,9 +49,6 @@ using libsnark::SHA256_block_size;
 using libff::bit_vector;
 using libff::convert_bit_vector_to_field_element;
 
-
-
-
 const size_t MIXIMUS_TREE_DEPTH = 29;
 
 namespace ethsnarks {
@@ -97,6 +94,9 @@ namespace ethsnarks {
 *  5. Recipient withdraws deposit using their secret with a zkSNARK proof
 * 
 */
+
+#define SHA256_MERKLE
+
 class mod_miximus : public GadgetT
 {
 public:
@@ -130,6 +130,7 @@ public:
     merkle_path_authenticator<HashT> m_authenticator;
 
     // Cryptonian.base to set SHA256
+#ifdef SHA256_MERKLE
     SHAHashT leaf_sha_hash;
     merkle_path_authenticator<SHAHashT> m_auth_sha;
     #if 0
@@ -138,6 +139,7 @@ public:
     #endif
     block_variable<FieldT>  sha_full_input;
     digest_variable<FieldT> sha_full_output;
+#endif
 
     mod_miximus(
         ProtoboardT &in_pb,
@@ -171,6 +173,7 @@ public:
         // pub_hash(in_pb, zero, {root_var, nullifier_hash.result(), external_hash_var}, FMT(annotation_prefix, ".pub_hash")), // Cryptonian.base Out!
 
         //===== Cryptonian.base ======//
+    #ifdef SHA256_MERKLE
         #if 0
         sha_left(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:left")),
         sha_right(in_pb, SHA256_digest_size, FMT(annotation_prefix, "sha:right")),
@@ -183,11 +186,15 @@ public:
             // m_auth_sha 초기화는 m_authenticator 참조!!!!
             // sha256_full 의 libsnark::digest_variable<FieldT> output; 
                 // 다만  param은 VariableT?! - libsnark::pb_variable<ethsnarks::FieldT> VariableT in_leaf;
+        
+        
         m_auth_sha(in_pb, tree_depth, address_bits.bits, m_IVs, 
             //leaf_sha_hash.output.get_digest(), 
             // make_variable(in_pb, convert_bit_vector_to_field_element(leaf_sha_hash.output.get_digest())),
             make_variable(in_pb, convert_bit_vector_to_field_element<FieldT>(leaf_sha_hash.output.get_digest()), FMT(annotation_prefix,"sha:leaf_sha_hash.output")),
             root_var, path_var, FMT(annotation_prefix,"sha:authenticator")),
+        
+
         /*
         merkle_path_authenticator(d
             ProtoboardT &in_pb,
@@ -200,6 +207,7 @@ public:
             const std::string &in_annotation_prefix
         )
         */
+    #endif
         //===========================//
 
         // leaf_hash = H(secret)
@@ -245,8 +253,10 @@ public:
         m_authenticator.generate_r1cs_constraints();
 
         // Cryptonian.base
+    #ifdef SHA256_MERKLE
         m_auth_sha.generate_r1cs_constraints();
         leaf_sha_hash.generate_r1cs_constraints();
+    #endif
     }
 
     //======== Cryptonian.base ============//
@@ -322,11 +332,13 @@ public:
         assert(in_block.size() == SHA256_block_size);
         assert(in_expected_bv.size() == SHA256_digest_size);
 
+    #ifdef SHA256_MERKLE
         sha_full_input.generate_r1cs_witness(in_block);
         sha_full_output.generate_r1cs_witness(in_expected_bv);
         
         leaf_sha_hash.generate_r1cs_witness();
         m_auth_sha.generate_r1cs_witness();
+    #endif
     }
 };
 
